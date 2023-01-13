@@ -26,6 +26,11 @@ class JumpScene extends Phaser.Scene {
   }
 
   create() {
+    const graphics = this.add.graphics();
+    graphics.fillGradientStyle(0xdadaff, 0x6cfafa, 0xfccaff, 0xdadaff, 1);
+    graphics.fillRect(0, 0, gameOptions.width, gameOptions.height);
+
+    particles = this.add.particles('stripe')
 
     this.physics.world.setBounds(0, 0, 480, 640);
     platforms = this.physics.add.group({
@@ -45,6 +50,14 @@ class JumpScene extends Phaser.Scene {
     player.body.checkCollision.left = false;
     player.body.checkCollision.right = false;
 
+    /* Add the character animations */
+    this.anims.create({
+      key: 'jump',
+      frames: this.anims.generateFrameNumbers('codey', { start: 2, end: 3 }),
+      frameRate: 10,
+      repeat: -1
+    });
+
     //In order for our platforms to interact with the player we add a collider  
     this.physics.add.collider(player, platforms);
 
@@ -52,16 +65,25 @@ class JumpScene extends Phaser.Scene {
   }
 
   update(){
-    if (cursors.left.isDown) {
+    player.anims.play('jump', true);
+    if (cursors.left.isDown)
+    {
       player.setVelocityX(-240); // we want to apply a negative x velocity to go left on the screen
-    } else if (cursors.right.isDown) {
+      player.flipX = true;
+    }
+    else if (cursors.right.isDown)
+    {
       player.setVelocityX(240); // we want to apply a positive x velocity to go right on the screen
-    } else {   
+      player.flipX = false;
+    }
+    else
+    {   
       //if we don't include this then the player will always be going right or left instead of a L/R neutral upwards direction
       player.setVelocityX(0);
     }
 
     if (player.body.touching.down) {
+      this.cameras.main.shake(100, .004);
       player.setVelocityY(-500);
     }
 
@@ -71,7 +93,20 @@ class JumpScene extends Phaser.Scene {
     if (player.body.y <  gameOptions.height/2) {
       platforms.children.iterate(updateY, this);
     }
+
+    if (platformCount > 10 && !emitter) {
+      emitter = particles.createEmitter({
+        x: { min: 0, max: gameOptions.width },
+        y: gameOptions.height + 10,
+        lifespan: 2500,
+        speedY: { min: -300, max: -500 },
+        scale: .5,
+        quantity: 5,
+        blendMode: 'ADD'
+      });
+    }
   }
+
 }
 
 let config = {
